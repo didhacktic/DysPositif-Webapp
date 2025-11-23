@@ -12,3 +12,5 @@ __pycache__/
 .DS_Store
 *.swp
 .venv/
+# Adobe PDF Services credentials (keep local only)
+utils/pdfservices-api-credentials.json
