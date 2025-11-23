@@ -14,7 +14,6 @@
                 <a href="/" class="btn-secondary">🔙 Nouveau document</a>
                 <button onclick="printDocument()" class="btn-secondary">🖨️ Imprimer</button>
                 <button id="shareBtn" class="btn-secondary" title="Partager le ZIP">🔗 Partager</button>
-                <button id="editBtn" class="btn-secondary" title="Modifier le HTML">✏️ Modifier</button>
                 <a href="{{ url_for('download_zip', output_id=output_id) }}" class="btn-primary" download>
                     📥 Télécharger (ZIP)
                 </a>
@@ -79,7 +78,6 @@
         // Boutons Partager et Modifier
         document.addEventListener('DOMContentLoaded', function() {
             const shareBtn = document.getElementById('shareBtn');
-            const editBtn = document.getElementById('editBtn');
             if (shareBtn) {
                 shareBtn.addEventListener('click', function() {
                     const url = window.location.origin + downloadZipUrl;
@@ -88,12 +86,6 @@
                     }, () => {
                         alert('Impossible de copier le lien.');
                     });
-                });
-            }
-            if (editBtn) {
-                editBtn.addEventListener('click', function() {
-                    const url = window.location.origin + viewHtmlUrl;
-                    window.open(url, '_blank');
                 });
             }
         });
