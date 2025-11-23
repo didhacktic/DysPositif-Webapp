@@ -125,6 +125,16 @@
         const spacingRequested = {{ 'true' if spacing_requested else 'false' }};
         const initialFontSize = {{ (font_size or '16')|tojson }};
         const initialFontFamily = {{ (font_family or 'OpenDyslexic')|tojson }};
+
+        // Définit la map de polices au niveau global du script pour qu'elle soit
+        // accessible depuis tous les écouteurs (load, change, etc.).
+        const fontMap = {
+            'OpenDyslexic': "'OpenDyslexic','Inter','Noto Sans Math','Noto Sans Symbols','DejaVu Sans','Symbola','Arial',sans-serif",
+            'Arial': "Arial, sans-serif",
+            'Comic Sans MS': "'Comic Sans MS', 'Comic Sans', cursive",
+            'Verdana': "Verdana, sans-serif",
+            'Tahoma': "Tahoma, sans-serif"
+        };
         
         iframe.addEventListener('load', () => {
             const doc = iframe.contentDocument || iframe.contentWindow.document;
@@ -151,13 +161,6 @@
                 document.getElementById('fontSizeDisplay').textContent = initialFontSize + 'px';
             }
             // Appliquer la police initiale (avec fallback complet pour glyphes spéciaux)
-            const fontMap = {
-                'OpenDyslexic': "'OpenDyslexic','Inter','Noto Sans Math','Noto Sans Symbols','DejaVu Sans','Symbola','Arial',sans-serif",
-                'Arial': "Arial, sans-serif",
-                'Comic Sans MS': "'Comic Sans MS', 'Comic Sans', cursive",
-                'Verdana': "Verdana, sans-serif",
-                'Tahoma': "Tahoma, sans-serif"
-            };
             if (doc.body) {
                 const fam = fontMap[initialFontFamily] || fontMap['OpenDyslexic'];
                 doc.body.style.setProperty('font-family', fam, 'important');
