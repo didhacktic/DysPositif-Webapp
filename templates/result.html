@@ -150,9 +150,17 @@
                 document.getElementById('fontSizeRange').value = initialFontSize;
                 document.getElementById('fontSizeDisplay').textContent = initialFontSize + 'px';
             }
-            // Appliquer la police initiale
+            // Appliquer la police initiale (avec fallback complet pour glyphes spéciaux)
+            const fontMap = {
+                'OpenDyslexic': "'OpenDyslexic','Inter','Noto Sans Math','Noto Sans Symbols','DejaVu Sans','Symbola','Arial',sans-serif",
+                'Arial': "Arial, sans-serif",
+                'Comic Sans MS': "'Comic Sans MS', 'Comic Sans', cursive",
+                'Verdana': "Verdana, sans-serif",
+                'Tahoma': "Tahoma, sans-serif"
+            };
             if (doc.body) {
-                doc.body.style.setProperty('font-family', `'${initialFontFamily}', sans-serif`, 'important');
+                const fam = fontMap[initialFontFamily] || fontMap['OpenDyslexic'];
+                doc.body.style.setProperty('font-family', fam, 'important');
                 document.getElementById('fontFamilySelect').value = initialFontFamily;
             }
         });
@@ -170,7 +178,8 @@
             const val = e.target.value;
             const doc = iframe.contentDocument || iframe.contentWindow.document;
             if (doc && doc.body) {
-                doc.body.style.setProperty('font-family', `'${val}', sans-serif`, 'important');
+                const fam = fontMap[val] || (`'${val}', sans-serif`);
+                doc.body.style.setProperty('font-family', fam, 'important');
             }
         });
 
