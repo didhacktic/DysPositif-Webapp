@@ -1,0 +1,13 @@
+# Fichiers et dossiers à ignorer pour le dépôt DysPositif-Webapp
+Fichiers_test/
+scripts/
+outputs/
+uploads/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+*.env
+.DS_Store
+*.swp

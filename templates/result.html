@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Résultat - DysPositif</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="result-page">
+    <div class="result-container">
+        <header class="result-header">
+            <h1>✅ Document converti avec succès</h1>
+            <div class="actions">
+                <a href="/" class="btn-secondary">🔙 Nouveau document</a>
+                <button onclick="printDocument()" class="btn-secondary">🖨️ Imprimer</button>
+                <button id="shareBtn" class="btn-secondary" title="Partager le ZIP">🔗 Partager</button>
+                <button id="editBtn" class="btn-secondary" title="Modifier le HTML">✏️ Modifier</button>
+                <a href="{{ url_for('download_zip', output_id=output_id) }}" class="btn-primary" download>
+                    📥 Télécharger (ZIP)
+                </a>
+            </div>
+
+        </header>
+
+        <div class="preview-layout">
+            <div class="preview-wrapper">
+                <div class="preview-toolbar">
+                    <span>📄 Aperçu</span>
+                    <button onclick="toggleFullscreen()" class="btn-icon" title="Plein écran">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+                        </svg>
+                    </button>
+                </div>
+                <iframe 
+                    id="previewFrame"
+                    src="{{ url_for('view_html', output_id=output_id) }}"
+                    frameborder="0"
+                    class="preview-iframe"
+                ></iframe>
+            </div>
+            <aside class="side-panel">
+                <h3>⚙️ Paramètres</h3>
+                <div class="panel-group">
+                    <label for="fontSizeRange"><strong>Taille du texte</strong> <span id="fontSizeDisplay">16px</span></label>
+                    <input type="range" id="fontSizeRange" min="12" max="30" value="{{ font_size|default('16') }}" step="1">
+                </div>
+                <div class="panel-group">
+                    <label for="fontFamilySelect"><strong>Police</strong></label>
+                    <select id="fontFamilySelect" class="select-input">
+                        <option value="OpenDyslexic" {% if font_family == 'OpenDyslexic' %}selected{% endif %}>OpenDyslexic</option>
+                        <option value="Arial" {% if font_family == 'Arial' %}selected{% endif %}>Arial</option>
+                        <option value="Comic Sans MS" {% if font_family == 'Comic Sans MS' %}selected{% endif %}>Comic Sans MS</option>
+                        <option value="Verdana" {% if font_family == 'Verdana' %}selected{% endif %}>Verdana</option>
+                        <option value="Tahoma" {% if font_family == 'Tahoma' %}selected{% endif %}>Tahoma</option>
+                    </select>
+                </div>
+                <div class="panel-group">
+                    <button id="spacingBtn" class="btn-secondary" onclick="toggleSpacingPanel()">Espacement: OFF</button>
+                </div>
+            </aside>
+        </div>
+
+        <div class="instructions">
+            <h3>💡 Instructions</h3>
+            <ul>
+                <li><strong>Télécharger :</strong> Le fichier ZIP contient le HTML et toutes les images</li>
+                <li><strong>Imprimer :</strong> Utilisez le bouton d'impression pour générer un PDF</li>
+                <li><strong>Partager :</strong> Envoyez le ZIP ou ouvrez index.html dans un navigateur</li>
+                <li><strong>Modifier :</strong> Le document HTML peut être édité avec n'importe quel éditeur de texte</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // URLs pour les boutons Partager et Modifier
+        const downloadZipUrl = "{{ url_for('download_zip', output_id=output_id) }}";
+        const viewHtmlUrl = "{{ url_for('view_html', output_id=output_id) }}";
+        // Boutons Partager et Modifier
+        document.addEventListener('DOMContentLoaded', function() {
+            const shareBtn = document.getElementById('shareBtn');
+            const editBtn = document.getElementById('editBtn');
+            if (shareBtn) {
+                shareBtn.addEventListener('click', function() {
+                    const url = window.location.origin + downloadZipUrl;
+                    navigator.clipboard.writeText(url).then(() => {
+                        alert('Lien de téléchargement copié dans le presse-papiers !');
+                    }, () => {
+                        alert('Impossible de copier le lien.');
+                    });
+                });
+            }
+            if (editBtn) {
+                editBtn.addEventListener('click', function() {
+                    const url = window.location.origin + viewHtmlUrl;
+                    window.open(url, '_blank');
+                });
+            }
+        });
+        function printDocument() {
+            const iframe = document.getElementById('previewFrame');
+            iframe.contentWindow.print();
+        }
+
+        function toggleFullscreen() {
+            const iframe = document.getElementById('previewFrame');
+            if (!document.fullscreenElement) {
+                iframe.requestFullscreen().catch(err => {
+                    console.error('Erreur plein écran:', err);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        // Raccourci clavier Escape pour sortir du plein écran
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && document.fullscreenElement) {
+                document.exitFullscreen();
+            }
+        });
+
+        // --- Interaction avec le contenu de l'iframe ---
+        const iframe = document.getElementById('previewFrame');
+        const spacingRequested = {{ 'true' if spacing_requested else 'false' }};
+        const initialFontSize = {{ (font_size or '16')|tojson }};
+        const initialFontFamily = {{ (font_family or 'OpenDyslexic')|tojson }};
+        
+        iframe.addEventListener('load', () => {
+            const doc = iframe.contentDocument || iframe.contentWindow.document;
+            if (!doc) return;
+            // Cacher éventuelle ancienne toolbar interne
+            const oldTb = doc.querySelector('.toolbar');
+            if (oldTb) oldTb.style.display = 'none';
+            // Injecter style pour spacing-active si absent
+            if (!doc.getElementById('dys-style-spacing')) {
+                const st = doc.createElement('style');
+                st.id = 'dys-style-spacing';
+                st.textContent = `.spacing-active { line-height:1.9 !important; letter-spacing:0.5px !important; word-spacing:4px !important; }`;
+                doc.head.appendChild(st);
+            }
+            // Activer l'espacement si demandé dans le formulaire
+            if (spacingRequested && doc.body) {
+                doc.body.classList.add('spacing-active');
+                document.getElementById('spacingBtn').textContent = 'Espacement: ON';
+            }
+            // Appliquer la taille de police initiale
+            if (doc.body) {
+                doc.body.style.setProperty('font-size', initialFontSize + 'px', 'important');
+                document.getElementById('fontSizeRange').value = initialFontSize;
+                document.getElementById('fontSizeDisplay').textContent = initialFontSize + 'px';
+            }
+            // Appliquer la police initiale
+            if (doc.body) {
+                doc.body.style.setProperty('font-family', `'${initialFontFamily}', sans-serif`, 'important');
+                document.getElementById('fontFamilySelect').value = initialFontFamily;
+            }
+        });
+
+        document.getElementById('fontSizeRange').addEventListener('input', (e) => {
+            const val = e.target.value;
+            document.getElementById('fontSizeDisplay').textContent = val + 'px';
+            const doc = iframe.contentDocument || iframe.contentWindow.document;
+            if (doc && doc.body) {
+                doc.body.style.setProperty('font-size', val + 'px', 'important');
+            }
+        });
+
+        document.getElementById('fontFamilySelect').addEventListener('change', (e) => {
+            const val = e.target.value;
+            const doc = iframe.contentDocument || iframe.contentWindow.document;
+            if (doc && doc.body) {
+                doc.body.style.setProperty('font-family', `'${val}', sans-serif`, 'important');
+            }
+        });
+
+        function toggleSpacingPanel() {
+            const doc = iframe.contentDocument || iframe.contentWindow.document;
+            if (!doc || !doc.body) return;
+            doc.body.classList.toggle('spacing-active');
+            const active = doc.body.classList.contains('spacing-active');
+            document.getElementById('spacingBtn').textContent = 'Espacement: ' + (active ? 'ON' : 'OFF');
+        }
+
+    </script>
+</body>
+</html>

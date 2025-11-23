@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DysPositif - Adaptateur de documents</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📚 DysPositif</h1>
+            <p class="subtitle">Adaptez vos documents pour faciliter la lecture</p>
+        </header>
+
+        <main>
+            <form id="uploadForm" enctype="multipart/form-data">
+                <!-- Zone de drop -->
+                <div id="dropZone" class="drop-zone">
+                    <input type="file" id="fileInput" name="document" accept=".pdf,.docx,.odt" hidden>
+                    <div class="drop-content">
+                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        <p class="drop-text">Glissez votre fichier ici ou cliquez pour sélectionner</p>
+                        <p class="drop-hint">PDF, DOCX ou ODT • Maximum 50 MB</p>
+                        <span id="fileName" class="file-name"></span>
+                    </div>
+                </div>
+
+                <!-- Options de coloration -->
+                <div class="options-section">
+                    <h2>🎨 Options de coloration</h2>
+                    <div class="options-grid">
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="syllables" id="syllables">
+                            <span class="checkbox-custom"></span>
+                            <div>
+                                <strong>Syllabes colorées</strong>
+                                <small>Alternance rouge/bleu par syllabe</small>
+                            </div>
+                        </label>
+
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="mute_letters" id="mute_letters">
+                            <span class="checkbox-custom"></span>
+                            <div>
+                                <strong>Lettres muettes</strong>
+                                <small>Lettres finales silencieuses en gris</small>
+                            </div>
+                        </label>
+
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="numbers_position" id="numbers_position">
+                            <span class="checkbox-custom"></span>
+                            <div>
+                                <strong>Nombres (position)</strong>
+                                <small>Couleur par position décimale</small>
+                            </div>
+                        </label>
+
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="numbers_multicolor" id="numbers_multicolor">
+                            <span class="checkbox-custom"></span>
+                            <div>
+                                <strong>Nombres (arc-en-ciel)</strong>
+                                <small>Chaque chiffre en couleur</small>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Options de mise en forme -->
+                <div class="options-section">
+                    <h2>✨ Mise en forme</h2>
+                    <div class="form-row">
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="spacing" id="spacing" checked>
+                            <span class="checkbox-custom"></span>
+                            <div>
+                                <strong>Espacement renforcé</strong>
+                                <small>Interlignes 1,5 et espace entre les lettres 2,4</small>
+                            </div>
+                        </label>
+                    </div>
+                    
+                    <div class="form-row">
+                    </div>
+
+                    <div class="form-row">
+                        <label for="font_size">
+                            <strong>Taille de police</strong>
+                            <span id="fontSizeValue">16</span> px
+                        </label>
+                        <input type="range" name="font_size" id="font_size" min="12" max="30" value="16" step="1">
+                    </div>
+
+                    <div class="form-row">
+                        <label for="font_family"><strong>Police de caractères</strong></label>
+                        <select name="font_family" id="font_family" class="select-input">
+                            <option value="OpenDyslexic" selected>OpenDyslexic (DYS)</option>
+                            <option value="Arial">Arial</option>
+                            <option value="Comic Sans MS">Comic Sans MS</option>
+                            <option value="Verdana">Verdana</option>
+                            <option value="Tahoma">Tahoma</option>
+                        </select>
+                    </div>
+
+                    <div class="form-row">
+                        <label><strong>Aperçu lisibilité</strong></label>
+                        <div id="readabilityPreview" class="readability-preview">
+                            <p class="sample">Exemple de texte : Les élèves lisent ce paragraphe adapté pour tester la taille et la police choisies.</p>
+                            <p class="sample">12345 chiffres — observer coloration si activée après conversion (non visible ici).</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Options avancées -->
+                <details class="advanced-options">
+                    <summary><strong>⚙️ Options avancées</strong></summary>
+                    <div class="form-row">
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="merge_annotations" id="merge_annotations" checked>
+                            <span class="checkbox-custom"></span>
+                            <div>
+                                <strong>Fusionner les annotations d'images</strong>
+                                <small>Regrouper les légendes proches</small>
+                            </div>
+                        </label>
+                    </div>
+                    <div class="form-row">
+                        <label for="annotation_margin">
+                            <strong>Marge de fusion des annotations</strong>
+                            <span id="annotationMarginValue">8</span> pt
+                        </label>
+                        <input type="range" name="annotation_margin" id="annotation_margin" min="5" max="20" value="8" step="1">
+                    </div>
+                </details>
+
+                <!-- Bouton de conversion -->
+                <button type="submit" id="convertBtn" class="btn-primary" disabled>
+                    <span id="btnText">Sélectionnez un fichier</span>
+                    <div id="loader" class="loader" hidden></div>
+                </button>
+
+                <!-- Barre de progression -->
+                <div id="progressBar" class="progress-bar" hidden>
+                    <div class="progress-fill"></div>
+                </div>
+
+                <!-- Messages -->
+                <div id="message" class="message" hidden></div>
+            </form>
+        </main>
+
+        <footer>
+            <p>DysPositif • Outil d'adaptation de documents pour les troubles DYS</p>
+        </footer>
+    </div>
+
+    <script>
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const fileName = document.getElementById('fileName');
+        const uploadForm = document.getElementById('uploadForm');
+        const convertBtn = document.getElementById('convertBtn');
+        const btnText = document.getElementById('btnText');
+        const loader = document.getElementById('loader');
+        const progressBar = document.getElementById('progressBar');
+        const message = document.getElementById('message');
+
+        // Sliders avec affichage valeur
+        const fontSizeSlider = document.getElementById('font_size');
+        const fontSizeValue = document.getElementById('fontSizeValue');
+        const fontFamilySelect = document.getElementById('font_family');
+        const spacingCheckbox = document.getElementById('spacing');
+        const readabilityPreview = document.getElementById('readabilityPreview');
+
+        function updatePreview() {
+            const size = fontSizeSlider.value;
+            const family = fontFamilySelect.value;
+            const spacingOn = spacingCheckbox.checked;
+            readabilityPreview.style.fontSize = size + 'px';
+            readabilityPreview.style.fontFamily = `'${family}', sans-serif`;
+            readabilityPreview.classList.toggle('spacing-active', spacingOn);
+            fontSizeValue.textContent = size;
+        }
+
+        fontSizeSlider.addEventListener('input', updatePreview);
+        fontFamilySelect.addEventListener('change', updatePreview);
+        spacingCheckbox.addEventListener('change', updatePreview);
+        updatePreview();
+
+        const annotationMarginSlider = document.getElementById('annotation_margin');
+        const annotationMarginValue = document.getElementById('annotationMarginValue');
+        annotationMarginSlider.addEventListener('input', () => {
+            annotationMarginValue.textContent = annotationMarginSlider.value;
+        });
+
+        // Exclusion mutuelle pour colorations de nombres
+        const numbersPosition = document.getElementById('numbers_position');
+        const numbersMulticolor = document.getElementById('numbers_multicolor');
+        numbersPosition.addEventListener('change', () => {
+            if (numbersPosition.checked) numbersMulticolor.checked = false;
+        });
+        numbersMulticolor.addEventListener('change', () => {
+            if (numbersMulticolor.checked) numbersPosition.checked = false;
+        });
+
+        // Gestion du drag & drop
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('drag-over');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('drag-over');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                handleFileSelect();
+            }
+        });
+
+        fileInput.addEventListener('change', handleFileSelect);
+
+        function handleFileSelect() {
+            const file = fileInput.files[0];
+            if (file) {
+                fileName.textContent = `📄 ${file.name} (${formatFileSize(file.size)})`;
+                fileName.hidden = false;
+                convertBtn.disabled = false;
+                btnText.textContent = 'Convertir le document';
+                message.hidden = true;
+            }
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+
+        // Soumission du formulaire
+        uploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            if (!fileInput.files[0]) {
+                showMessage('Veuillez sélectionner un fichier', 'error');
+                return;
+            }
+
+            // UI: mode chargement
+            convertBtn.disabled = true;
+            loader.hidden = false;
+            btnText.textContent = 'Conversion en cours...';
+            progressBar.hidden = false;
+            message.hidden = true;
+
+            // Envoi du formulaire
+            const formData = new FormData(uploadForm);
+
+            try {
+                const response = await fetch('/convert', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    showMessage('✅ Conversion réussie ! Redirection...', 'success');
+                    setTimeout(() => {
+                        window.location.href = result.preview_url;
+                    }, 1000);
+                } else {
+                    showMessage(`❌ Erreur: ${result.error}`, 'error');
+                    resetForm();
+                }
+            } catch (error) {
+                showMessage(`❌ Erreur réseau: ${error.message}`, 'error');
+                resetForm();
+            }
+        });
+
+        function showMessage(text, type) {
+            message.textContent = text;
+            message.className = `message message-${type}`;
+            message.hidden = false;
+        }
+
+        function resetForm() {
+            convertBtn.disabled = false;
+            loader.hidden = true;
+            btnText.textContent = 'Convertir le document';
+            progressBar.hidden = true;
+        }
+    </script>
+</body>
+</html>
