@@ -1,8 +1,3 @@
-# DysPositif-Webapp
-Webapp DysPositif : adaptation de documents PDF pour la dyslexie (conversion, coloration, reflow, etc). Version web moderne.
-
----
-
 # DysPositif Webapp
 
 Version autonome web pour conversion de PDF en HTML adapté (syllabes, lettres muettes, nombres colorés).
@@ -28,25 +23,48 @@ DysPositifWebapp/
   LICENSE
 ```
 
+
 ## Installation
 ```bash
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 ```
-Si syllabisation activée :
+
+
+> requirements.txt contient uniquement les dépendances principales nécessaires au fonctionnement de la webapp.
+> Pour un environnement complet (développement, documentation, etc.), utilisez requirements-dev.txt :
+> ```bash
+> pip install -r requirements-dev.txt
+> ```
+
+
+
+## Lancement automatique (recommandé)
+Un script facilite le lancement de la webapp :
+
 ```bash
-pip install git+https://framagit.org/arkaline/pylirecouleur.git
+./dyspositif-wa.sh
 ```
 
-## Lancement
+Ce script :
+- crée et active l’environnement virtuel si besoin
+- installe les dépendances manquantes
+- télécharge le modèle spaCy fr_core_news_md si nécessaire
+- lance automatiquement le serveur Flask
+
+Vous pouvez ensuite ouvrir http://localhost:5000
+
+## Lancement manuel (avancé)
+Si vous préférez lancer manuellement :
 ```bash
-python app/app.py
+python main.py
 ```
 Puis ouvrir http://localhost:5000
 
+
 ## Conversion
-La webapp appelle le script original `DysPositif/scripts/pdf_to_reflow_html.py`. Assurez-vous que le projet principal est présent au chemin parent attendu.
+La webapp intègre la logique de conversion directement dans le dossier `conversion/` du dépôt `DysPositifWebapp`.
 
 Options de coloration (cases à cocher) :
 - Syllabes (`--syllables`)
@@ -54,8 +72,10 @@ Options de coloration (cases à cocher) :
 - Nombres par position (`--numbers-position`)
 - Nombres multicolor (`--numbers-multicolor`)
 
+
 ## Personnalisation
-Pour supprimer la dépendance au script original, recopiez son contenu complet dans `conversion/pdf_to_reflow_html.py` et adaptez les imports (chemins core).
+Pour adapter ou enrichir la conversion, modifiez les scripts du dossier `conversion/` et les modules du dossier `core/`.
 
 ## Licence
+
 GPLv3 – dérivé du projet principal DysPositif.

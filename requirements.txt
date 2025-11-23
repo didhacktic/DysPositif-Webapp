@@ -1,0 +1,28 @@
+# =============================
+# Dépendances Flask et Web
+# =============================
+Flask
+Jinja2
+Werkzeug
+itsdangerous
+click
+blinker
+requests
+beautifulsoup4
+lxml
+
+# =============================
+# Dépendances formatage/traitement de texte
+# =============================
+python-docx
+PyMuPDF
+pylirecouleur
+pdfservices-sdk
+pillow
+fr_core_news_md
+spacy
+
+# =============================
+# Utilitaires
+# =============================
+tqdm
