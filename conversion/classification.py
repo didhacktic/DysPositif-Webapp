@@ -44,9 +44,19 @@ _MATH_ITALIC_MAP = {
     '𝑓': 'f', '𝑔': 'g', '𝑁': 'N', '𝑥': 'x', '𝑛': 'n', '𝑦': 'y'
 }
 
+# Mapping pour glyphes hors-UNICODE standards souvent présents dans les PDFs
+# (Private Use / embedded font glyphs). On mappe les codepoints fréquents vers
+# des équivalents Unicode canoniques utilisés ailleurs dans le pipeline.
+_PRIVATE_USE_MAP = {
+    '\uf06f': '☐',  # glyphe extrait parfois depuis Wingdings / polices embarquées → case vide
+}
+
 
 def normalize_glyph_char(ch: str) -> str:
     """Normalise glyphes (puces, cases, italique math)."""
+    # Gestion des glyphes Private Use (polices embarquées dans le PDF)
+    if ch in _PRIVATE_USE_MAP:
+        return _PRIVATE_USE_MAP[ch]
     if ch in _BULLET_VARIANTS:
         return '•'
     if ch in _CHECKBOX_EMPTY_VARIANTS:
