@@ -49,6 +49,29 @@ _MATH_ITALIC_MAP = {
 # des équivalents Unicode canoniques utilisés ailleurs dans le pipeline.
 _PRIVATE_USE_MAP = {
     '\uf06f': '☐',  # glyphe extrait parfois depuis Wingdings / polices embarquées → case vide
+    # Variantes PUA fréquentes rencontrées dans des PDFs (Wingdings / ZapfDingbats, etc.)
+    # On mappe majoritairement vers la case vide canonique '☐'.
+    '\uf0a8': '☐',
+    '\uf0a3': '☐',
+    '\uf0a4': '☐',
+    '\uf0a5': '☐',
+    '\uf0a6': '☐',
+    '\uf0a7': '☐',
+    '\uf0a9': '☐',
+    '\uf0aa': '☐',
+    '\uf0ab': '☐',
+    '\uf0ac': '☐',
+    '\uf0ad': '☐',
+    '\uf0ae': '☐',
+    '\uf0af': '☐',
+    '\uf0b0': '☐',
+    '\uf0b1': '☐',
+    '\uf0b2': '☐',
+    '\uf0b3': '☐',
+    '\uf0b4': '☐',
+    # Quelques variantes parfois utilisées pour cases cochées — normaliser en case cochée
+    '\uf0a2': '☑',
+    '\uf0b5': '☑',
 }
 
 
