@@ -61,11 +61,27 @@ def convert():
     pdf_path = work_dir / pdf_file.filename
     pdf_file.save(pdf_path)
 
+    # Lecture des options d'annotations issues du formulaire
+    merge_annotations = bool(request.form.get('merge_annotations'))
+    try:
+        annotation_margin = float(request.form.get('annotation_margin', '10'))
+    except Exception:
+        annotation_margin = 10.0
+    try:
+        annotation_dpi = int(request.form.get('annotation_dpi', '144'))
+    except Exception:
+        annotation_dpi = 144
+    smart_annotations = bool(request.form.get('smart_annotations'))
+
     opts = ConversionOptions(
         syllables=bool(request.form.get('syllables')),
         mute_letters=bool(request.form.get('mute_letters')),
         numbers_position=bool(request.form.get('numbers_position')),
         numbers_multicolor=bool(request.form.get('numbers_multicolor')),
+        merge_annotations=merge_annotations,
+        annotation_margin=annotation_margin,
+        annotation_dpi=annotation_dpi,
+        smart_annotations=smart_annotations,
     )
 
     try:
