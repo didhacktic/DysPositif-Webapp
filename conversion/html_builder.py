@@ -33,78 +33,12 @@ li { margin:0.5rem 0; }
 .meta { font-size:0.85rem; color:#555; margin-bottom:2rem; }
 .page-break { border-top:2px solid #bbb; margin:3rem 0; padding-top:1rem; }
 img.doc-image { max-width:100%; height:auto; margin:1.5rem 0; border:1px solid #ddd; border-radius:4px; }
-.toolbar { position:fixed; top:1rem; right:1rem; background:#fff; padding:1rem; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.15); z-index:1000; max-width:280px; }
-.toolbar h3 { margin:0 0 0.8rem; font-size:1.1em; color:#333; }
-.toolbar-section { margin-bottom:1rem; padding-bottom:1rem; border-bottom:1px solid #ddd; }
-.toolbar-section:last-child { border-bottom:none; margin-bottom:0; }
-.toolbar label { display:block; margin-bottom:0.4rem; font-size:0.9em; font-weight:500; color:#555; }
-.toolbar button { width:100%; padding:0.5rem; margin-bottom:0.4rem; background:#4a90e2; color:#fff; border:none; border-radius:4px; cursor:pointer; font-size:0.9em; transition:background 0.2s; }
-.toolbar button:hover { background:#357abd; }
-.toolbar button.secondary { background:#6c757d; }
-.toolbar button.secondary:hover { background:#545b62; }
-.toolbar input[type=range] { width:100%; margin:0.4rem 0; }
-.toolbar select { width:100%; padding:0.4rem; border:1px solid #ccc; border-radius:4px; font-size:0.9em; }
-.toolbar .slider-value { display:inline-block; font-weight:600; color:#4a90e2; margin-left:0.5rem; }
-body.spacing-active { line-height:1.5; letter-spacing:2.4px; }
 """
 
 JS_BASE = """
-let spacingActive = false;
-function toggleSpacing(){
-  spacingActive = !spacingActive;
-  document.body.classList.toggle('spacing-active', spacingActive);
-  const btn = document.getElementById('btn-spacing');
-  btn.textContent = spacingActive ? 'Espacement: ON' : 'Espacement: OFF';
-}
-function updateFontSize(val){
-  document.body.style.fontSize = val + 'px';
-  document.getElementById('font-size-val').textContent = val + 'px';
-}
-function changeFont(fontName){
-  const fontMap = {
-    'opendyslexic': "'OpenDyslexic','Inter','Noto Sans Math','Noto Sans Symbols','DejaVu Sans','Symbola','Arial',sans-serif",
-    'arial': "Arial, sans-serif",
-    'comic': "'Comic Sans MS', 'Comic Sans', cursive",
-    'verdana': "Verdana, sans-serif"
-  };
-  document.body.style.fontFamily = fontMap[fontName] || fontMap['opendyslexic'];
-}
-function applySyllables(){
-  alert('Regénérez avec --syllables');
-}
-function applyMuteLetters(){
-  alert('Regénérez avec --mute-letters');
-}
-function applyNumbersPosition(){
-  alert('Regénérez avec --numbers-position');
-}
-function applyNumbersMulticolor(){
-  alert('Regénérez avec --numbers-multicolor');
-}
 """
 
-TOOLBAR_HTML = """
-<div class='toolbar'>
-  <h3>⚙️ Paramètres DYS</h3>
-  <div class='toolbar-section'>
-    <button id='btn-spacing' onclick='toggleSpacing()'>Espacement: OFF</button>
-  </div>
-  <div class='toolbar-section'>
-    <label>Taille police: <span id='font-size-val' class='slider-value'>16px</span></label>
-    <input type='range' min='12' max='30' value='16' oninput='updateFontSize(this.value)'>
-  </div>
-  <div class='toolbar-section'>
-    <label for='font-select'>Police:</label>
-    <select id='font-select' onchange='changeFont(this.value)'>
-      <option value='opendyslexic' selected>OpenDyslexic</option>
-      <option value='arial'>Arial</option>
-      <option value='comic'>Comic Sans MS</option>
-      <option value='verdana'>Verdana</option>
-    </select>
-  </div>
-    <!-- Section boutons coloration supprimée -->
-</div>
-"""
+# TOOLBAR_HTML removed to produce raw HTML output (no interactive toolbox)
 
 def _apply_colorization(text_raw: str, apply_syllables: bool, apply_mute: bool, apply_num_pos: bool, apply_num_multi: bool) -> str:
     """Applique les colorations demandées sur un texte brut."""
@@ -132,7 +66,6 @@ def build_html(structured: List[tuple], source_pdf: str,
                   f"<style>{CSS_BASE}</style>", f"<script>{JS_BASE}</script>", "</head>", "<body>"]
     html_parts.append(f"<div class='meta'>Source PDF: {os.path.basename(source_pdf)}</div>")
     html_parts.append("<h1>Version adaptée</h1>")
-    html_parts.append(TOOLBAR_HTML)
 
     # Collect indentation info
     page_baseline = {}
