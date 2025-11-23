@@ -195,8 +195,14 @@ def colorize_numbers_multicolor_html(text: str) -> str:
         
         num_str = match.group(0)
         colored_digits = []
-        for i, digit in enumerate(num_str):
-            color = COLORS_NUMBERS_MULTI[i % len(COLORS_NUMBERS_MULTI)]
+        # Nouvelle logique : couleur fixe par chiffre (0..9)
+        for digit in num_str:
+            try:
+                idx = int(digit)
+                color = COLORS_NUMBERS_MULTI[idx]
+            except Exception:
+                # fallback: rotation sur la palette si caractère inattendu
+                color = COLORS_NUMBERS_MULTI[0]
             colored_digits.append(f"<span style='color:{color}'>{digit}</span>")
         result.append(''.join(colored_digits))
         
@@ -230,8 +236,13 @@ def colorize_numbers_in_html(html_text: str, use_position: bool, use_multicolor:
                         color = COLORS_NUMBERS_POS[i % len(COLORS_NUMBERS_POS)]
                         colored_digits.insert(0, f"<span style='color:{color}'>{digit}</span>")
                 else:
-                    for i, digit in enumerate(num_str):
-                        color = COLORS_NUMBERS_MULTI[i % len(COLORS_NUMBERS_MULTI)]
+                    # couleur fixe par chiffre : utiliser la valeur du chiffre comme index
+                    for digit in num_str:
+                        try:
+                            idx = int(digit)
+                            color = COLORS_NUMBERS_MULTI[idx]
+                        except Exception:
+                            color = COLORS_NUMBERS_MULTI[0]
                         colored_digits.append(f"<span style='color:{color}'>{digit}</span>")
                 
                 return ''.join(colored_digits)

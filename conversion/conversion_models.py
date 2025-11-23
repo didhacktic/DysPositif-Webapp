@@ -9,7 +9,19 @@ from typing import List, Optional
 COLORS_SYLLABLES = ['#DC143C', '#1E90FF']  # Rouge, Bleu
 COLOR_MUTE = '#C8C8C8'  # Gris
 COLORS_NUMBERS_POS = ['#0000FF', '#FF0000', '#00FF00', '#FFFF00', '#FF00FF']  # Bleu (unités), Rouge (dizaines), Vert (centaines)...
-COLORS_NUMBERS_MULTI = ['#0000FF', '#FF0000', '#00FF00', '#FFFF00', '#FF7F00', '#4B0082', '#9400D3']  # Arc-en-ciel
+# Palette fixe : couleur attribuée à chaque chiffre (0..9) — couleurs distinctes et visibles
+COLORS_NUMBERS_MULTI = [
+    '#1f77b4',  # 0 - blue
+    '#ff7f0e',  # 1 - orange
+    '#2ca02c',  # 2 - green
+    '#d62728',  # 3 - red
+    '#9467bd',  # 4 - purple
+    '#8c564b',  # 5 - brown
+    '#e377c2',  # 6 - pink
+    '#7f7f7f',  # 7 - gray
+    '#bcbd22',  # 8 - olive
+    '#17becf',  # 9 - cyan
+]  # Couleurs fixes par chiffre 0..9
 
 @dataclass
 class TextBlock:
