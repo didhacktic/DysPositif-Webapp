@@ -29,48 +29,13 @@ except Exception as _e:
     _nlp = None
     SPACY_OK = False
 
-# Exceptions et cas particuliers (copiés/adaptés)
-EXCEPTIONS_B = {
-    "rib", "blob", "club", "pub", "kebab", "nabab", "snob", "toubib",
-    "baobab", "jazzclub", "motoclub", "night-club"
-}
-EXCEPTIONS_G = {
-    "grog", "ring", "bang", "gong", "yang", "ying", "slang", "gang", "erg",
-    "iceberg", "zig", "zigzag", "krieg", "bowling", "briefing", "shopping",
-    "building", "camping", "parking", "living", "marketing", "dancing",
-    "jogging", "surfing", "training", "meeting", "feeling", "holding",
-    "standing", "trading"
-}
-EXCEPTIONS_P = {
-    "stop", "workshop", "handicap", "wrap", "ketchup", "top", "flip-flop",
-    "hip-hop", "clip", "slip", "trip", "grip", "strip", "shop", "drop",
-    "hop", "pop", "flop", "chop", "prop", "crop", "laptop", "desktop"
-}
-EXCEPTIONS_T = {
-    "but", "chut", "fiat", "brut", "concept", "foot", "huit", "mat", "net",
-    "ouest", "rut", "out", "ut", "flirt", "kurt", "loft", "raft", "rift",
-    "soft", "watt", "west", "abstract", "affect", "apart", "audit", "belt",
-    "best", "blast", "boost", "compact", "connect", "contact", "correct",
-    "cost", "craft", "cut", "direct", "district", "draft", "drift", "exact",
-    "exit", "impact", "infect", "input", "must", "next", "night", "outfit",
-    "output", "paint", "perfect", "plot", "post", "print", "prompt",
-    "prospect", "react", "root", "set", "shirt", "short", "shot", "smart",
-    "spirit", "split", "spot", "sprint", "start", "strict", "tact", "test",
-    "tilt", "tract", "trust", "twist", "volt", "et", "est"
-}
-EXCEPTIONS_X = {
-    "six", "dix", "index", "duplex", "latex", "lynx", "matrix", "mix",
-    "multiplex", "reflex", "relax", "remix", "silex", "thorax", "vortex", "xerox"
-}
-EXCEPTIONS_S = {
-    "bus", "ours", "tous", "plus", "ars", "cursus", "lapsus", "virus",
-    "cactus", "consensus", "us", "as", "mas", "bis", "lys", "métis", "os",
-    "bonus", "campus", "focus", "boss", "stress", "express", "dress",
-    "fitness", "Arras", "s", "houmous", "humus", "humérus", "cubitus", "habitus",
-    "hiatus", "des", "mes", "tes", "ces", "les", "ses"
-}
-
-EXCEPTIONS_D = {"david"}
+# Exceptions et cas particuliers (définis strictement selon la spécification utilisateur)
+EXC_B = {"rib", "blob", "club", "pub", "kebab", "nabab", "snob", "toubib", "baobab", "jazzclub", "motoclub", "night-club"}
+EXC_G = {"grog", "ring", "bang", "gong", "yang", "ying", "slang", "gang", "erg", "iceberg", "zig", "zigzag", "krieg", "bowling", "briefing", "shopping", "building", "camping", "parking", "living", "marketing", "dancing", "jogging", "surfing", "training", "meeting", "feeling", "holding", "standing", "trading"}
+EXC_P = {"stop", "workshop", "handicap", "wrap", "ketchup", "top", "flip-flop", "hip-hop", "clip", "slip", "trip", "grip", "strip", "shop", "drop", "hop", "pop", "flop", "chop", "prop", "crop", "laptop", "desktop"}
+EXC_T = {"sept", "et", "est", "but", "chut", "fiat", "brut", "concept", "foot", "huit", "mat", "net", "ouest", "rut", "out", "ut", "flirt", "kurt", "loft", "raft", "rift", "soft", "watt", "west", "abstract", "affect", "apart", "audit", "belt", "best", "blast", "boost", "compact", "connect", "contact", "correct", "cost", "craft", "cut", "direct", "district", "draft", "drift", "exact", "exit", "impact", "infect", "input", "must", "next", "night", "outfit", "output", "paint", "perfect", "plot", "post", "print", "prompt", "prospect", "react", "root", "set", "shirt", "short", "shot", "smart", "spirit", "split", "spot", "sprint", "start", "strict", "tact", "test", "tilt", "tract", "trust", "twist", "volt"}
+EXC_X = {"six", "dix", "index", "duplex", "latex", "lynx", "matrix", "mix", "multiplex", "reflex", "relax", "remix", "silex", "thorax", "vortex", "xerox"}
+EXC_S = {"bus", "ours", "ars", "cursus", "lapsus", "virus", "cactus", "consensus", "us", "as", "mas", "bis", "lys", "métis", "os", "bonus", "campus", "focus", "boss", "stress", "express", "dress", "fitness", "s", "houmous", "humus", "humérus", "cubitus", "habitus", "hiatus", "des", "mes", "tes", "ces", "les", "ses"}
 
 CAS_PARTICULIERS = {
     "croc": "c", "crocs": "cs",
@@ -80,223 +45,200 @@ CAS_PARTICULIERS = {
     "oeuf": "fs", "œuf": "fs", "oeufs": "fs", "œufs": "fs"
 }
 
-# ARTICLES pattern (pour règle 'tous + déterminant')
-ARTICLES = [
-    "le", "la", "les", "un", "une", "des", "du", "de", "au", "aux",
-    "mon", "ma", "mes", "ton", "ta", "tes", "son", "sa", "ses",
-    "notre", "nos", "votre", "vos", "ce", "cet", "cette", "ces",
-    "quelques", "chaque", "tout", "tous"
-]
-ARTICLES_RE = _re.compile(r"\b[tT]ous\s+(?:" + "|".join(_re.escape(a) for a in ARTICLES) + r")\b", _re.IGNORECASE)
+# tokenisation simple pour traitement mot-à-mot
+WORD_RE = _re.compile(r"[A-Za-zÀ-ÖØ-öø-ÿ]+(?:['’\-][A-Za-zÀ-ÖØ-öø-ÿ]+)*")
 
 
-def is_tous_followed_by_article(sentence: str) -> bool:
-    if not sentence:
-        return False
-    return bool(ARTICLES_RE.search(sentence))
-
-
-def _prev_non_punct(doc, i, sent_start):
-    j = i - 1
-    while j >= sent_start:
-        if not doc[j].is_punct:
-            return doc[j]
-        j -= 1
-    return None
-
-
-def _next_non_punct(doc, i, sent_end):
-    j = i + 1
-    while j < sent_end:
-        if not doc[j].is_punct:
-            return doc[j]
-        j += 1
-    return None
-
-
-def is_verb(word: str, sentence: str) -> bool:
-    if not SPACY_OK or not sentence:
-        return False
-    try:
-        doc = _nlp(sentence)
-        for token in doc:
-            if token.text.lower() == word.lower():
-                return token.pos_ == "VERB"
-    except Exception:
-        return False
-    return False
-
-
-def is_negation_plus(sentence: str, word: str) -> bool:
-    if not SPACY_OK or not sentence:
-        return False
-    try:
-        doc = _nlp(sentence)
-    except Exception:
-        return False
-
-    idx_plus = None
-    for i, t in enumerate(doc):
-        if t.text.lower() == word.lower():
-            idx_plus = i
-            break
-    if idx_plus is None:
-        return False
-
-    plus_tok = doc[idx_plus]
-    sent = plus_tok.sent
-    sent_start = sent.start
-    sent_end = sent.end
-
-    max_prev = 4
-    prev_tokens = []
-    j = plus_tok.i - 1
-    while j >= sent_start and len(prev_tokens) < max_prev:
-        if not doc[j].is_punct:
-            prev_tokens.append(doc[j])
-        j -= 1
-
-    neg_tokens = [tok for tok in prev_tokens if tok.text.lower() in {"ne", "n'"} or getattr(tok, "dep_,", "") == "neg"]
-    if neg_tokens:
-        neg_tok = neg_tokens[0]
-        if any(tok.pos_ == "VERB" for tok in sent if neg_tok.i < tok.i < plus_tok.i):
-            return True
-        next_tok = _next_non_punct(doc, plus_tok.i, sent_end)
-        if next_tok is not None and next_tok.pos_ == "VERB":
-            return True
-
-    return False
-
-
-def is_plus_relevant(sentence: str, word: str) -> bool:
-    if not SPACY_OK or not sentence:
-        return False
-    try:
-        doc = _nlp(sentence)
-    except Exception:
-        return False
-
+def _find_token_for_word(doc, word_lower: str):
+    """Retourne le premier token du doc dont .text.lower() == word_lower, ou None."""
     for t in doc:
-        if t.text.lower() == word.lower():
-            sent = t.sent
-            left = _prev_non_punct(doc, t.i, sent.start)
-            right = _next_non_punct(doc, t.i, sent.end)
-
-            def is_number(tok):
-                return getattr(tok, "like_num", False) or tok.pos_ == "NUM"
-
-            if left is not None and right is not None:
-                if is_number(left) and is_number(right):
-                    return False
-                if left.pos_ == "PRON" and right.pos_ == "PRON":
-                    return False
-                if left.pos_ in {"NOUN", "PROPN"} and right.pos_ in {"NOUN", "PROPN"}:
-                    return False
-
-            return is_negation_plus(sentence, word)
-    return False
+        if t.text.lower() == word_lower:
+            return t
+    return None
 
 
-def is_tous_determiner(sentence: str, word: str) -> bool:
-    return is_tous_followed_by_article(sentence)
+def _apply_final_letter_rules(base_word: str, positions: set, original_len: int):
+    """Applique les règles 2,3,4,5,7,8,9 sur le dernier caractère de base_word.
+    base_word doit être en minuscules. positions sont indices relatifs à la chaîne d'origine.
+    original_len est la longueur du mot original pour calculer indices absolus.
+    """
+    if not base_word:
+        return
+    last = len(base_word) - 1
+    last_char = base_word[last]
+
+    # règle 3: d final => toujours grisé
+    if last_char == 'd':
+        positions.add(original_len - 1)
+        return
+
+    # règle 2: b final sauf listes
+    if last_char == 'b' and base_word not in EXC_B:
+        positions.add(original_len - 1)
+        return
+
+    # règle 4: e final si précédé de i, é, u, sauf -gue/-que
+    if last_char == 'e' and len(base_word) >= 2:
+        prev = base_word[-2]
+        if prev in {'i', 'é', 'u'} and not (base_word.endswith('gue') or base_word.endswith('que')):
+            positions.add(original_len - 1)
+            return
+
+    # règle 5: g final sauf exceptions
+    if last_char == 'g' and base_word not in EXC_G:
+        positions.add(original_len - 1)
+        return
+
+    # règle 7: p final sauf exceptions
+    if last_char == 'p' and base_word not in EXC_P:
+        positions.add(original_len - 1)
+        return
+
+    # règle 8: t final sauf exceptions
+    if last_char == 't' and base_word not in EXC_T:
+        positions.add(original_len - 1)
+        return
+
+    # règle 9: x final sauf exceptions
+    if last_char == 'x' and base_word not in EXC_X:
+        positions.add(original_len - 1)
+        return
 
 
-def is_proper_noun(sentence: str, word: str) -> bool:
-    if not sentence:
-        return False
-
-    # spaCy
-    if SPACY_OK:
-        try:
-            doc = _nlp(sentence)
-            for token in doc:
-                if token.text.lower() == word.lower():
-                    if token.pos_ == "PROPN":
-                        return True
-                    if getattr(token, "ent_type_,", "") in {"PER", "PERSON"}:
-                        return True
-        except Exception:
-            pass
-
-    # fallback: Titlecase
-    if word and word[0].isupper():
+def _is_plus_to_gray(doc, token):
+    """Décide si 'plus' doit voir son 's' grisé selon les conditions (règle 14)."""
+    # token est un token spacy identifié pour 'plus'
+    # 1) précédé d'une négation
+    prev = token.nbor(-1) if token.i > token.sent.start else None
+    if prev is not None and (prev.text.lower() in {"ne", "n'"} or prev.dep_ == 'neg'):
         return True
 
+    # 2) suivi d'un adj ou adv
+    try:
+        nxt = token.nbor(1) if token.i + 1 < token.sent.end else None
+        if nxt is not None and nxt.pos_ in {"ADJ", "ADV"}:
+            return True
+    except Exception:
+        pass
+
+    # 3) suivi d'une quantité
+    try:
+        if nxt is not None and (getattr(nxt, 'like_num', False) or nxt.pos_ == 'NUM'):
+            return True
+        # heuristique: article + nom quantitatif -> check deux tokens suivants
+        if nxt is not None and nxt.pos_ == 'DET':
+            nxt2 = token.nbor(2) if token.i + 2 < token.sent.end else None
+            if nxt2 is not None and nxt2.pos_ in {"NOUN", "NUM"}:
+                return True
+    except Exception:
+        pass
+
+    # 4) motif 'plus ... plus' : si on trouve un autre 'plus' dans la même phrase
+    for t in token.sent:
+        if t.i != token.i and t.text.lower() == 'plus':
+            return True
+
     return False
 
 
-def get_mute_positions(word: str, sentence: str = None) -> Set[int]:
-    w = word.lower()
+def _is_tous_pronoun(doc, token):
+    # si spaCy indique PRON pour tous
+    return token.pos_ == 'PRON'
+
+
+def get_mute_positions(word: str, sentence: str | None = None) -> Set[int]:
+    """Retourne indices (0-based) des caractères à griser dans `word` selon règles.
+    `sentence` est optionnel, utile pour décisions contextuelles (spaCy).
+    """
+    if not word:
+        return set()
+
+    original = word
+    wn = word.lower()
     positions: Set[int] = set()
 
-    if sentence and is_proper_noun(sentence, word):
+    # Normalize simple composed words: treat as literal when in CAS_PARTICULIERS
+    if wn in CAS_PARTICULIERS:
+        suffix = CAS_PARTICULIERS[wn]
+        if wn.endswith(suffix):
+            for k in range(len(suffix)):
+                positions.add(len(original) - len(suffix) + k)
         return positions
 
-    if w in CAS_PARTICULIERS:
-        for c in CAS_PARTICULIERS[w]:
-            idx = w.rfind(c)
-            if idx != -1:
-                positions.add(idx)
-        return positions
-
-    if w and w[0] == "h":
+    # règle 1: h initial
+    if wn and wn[0] == 'h':
         positions.add(0)
 
-    if w.endswith("ent") and sentence and is_verb(w, sentence):
-        positions.add(len(w) - 2)
-        positions.add(len(w) - 1)
+    # Préparer doc spaCy si nécessaire
+    doc = None
+    token = None
+    if SPACY_OK and sentence:
+        try:
+            doc = _nlp(sentence)
+            token = _find_token_for_word(doc, wn)
+        except Exception:
+            doc = None
+            token = None
 
-    if w == "plus" and sentence and is_plus_relevant(sentence, w):
-        positions.add(len(w) - 1)
+    # règle 12: traitement des mots en -ent
+    if wn.endswith('ent'):
+        if doc is not None and token is not None and token.pos_ == 'VERB':
+            # verbe détecté
+            if wn.endswith('aient') and wn != 'aient':
+                # griser 'ent' entier
+                for k in range(3):
+                    positions.add(len(original) - 3 + k)
+                return positions
+            else:
+                # griser 'nt' (deux derniers caractères)
+                positions.add(len(original) - 2)
+                positions.add(len(original) - 1)
+                return positions
+        else:
+            # spaCy absent ou token non-verbe -> fallback: if endswith 'aient' griser ent, sinon fallthrough
+            if wn.endswith('aient') and wn != 'aient':
+                for k in range(3):
+                    positions.add(len(original) - 3 + k)
+                return positions
+
+    # règle 13: 'tous' spécial
+    if wn == 'tous' and doc is not None and token is not None:
+        if not _is_tous_pronoun(doc, token):
+            positions.add(len(original) - 1)
         return positions
 
-    if w == "tous" and sentence and is_tous_followed_by_article(sentence):
-        positions.add(len(w) - 1)
+    # règle 14: 'plus' spécial
+    if wn == 'plus':
+        if doc is not None and token is not None:
+            if _is_plus_to_gray(doc, token):
+                positions.add(len(original) - 1)
+                return positions
+        else:
+            # heuristic: look for "ne" before or digit after in sentence text
+            if sentence:
+                low = sentence.lower()
+                if (" ne plus" in low) or ("n'plus" in low) or any(n in low for n in [" ne ", " n'"]):
+                    positions.add(len(original) - 1)
+                    return positions
+
+    # règles générales sur la lettre finale
+    # on travaille sur base (mot sans le 's' final si on doit traiter pluriel plus tard)
+    if wn.endswith('s') and len(wn) > 1:
+        # décision de griser le 's' selon EXC_S
+        if wn not in EXC_S:
+            positions.add(len(original) - 1)  # griser le s
+            # règle 11: appliquer règles finales sur la lettre précédente
+            base = wn[:-1]
+            _apply_final_letter_rules(base, positions, len(original) - 1)
+        # sinon, ne rien faire pour le s
         return positions
 
-    if w.endswith("aient") and w != "aient":
-        positions.add(len(w) - 3)
-        positions.add(len(w) - 2)
-        positions.add(len(w) - 1)
-        return positions
-
-    last = len(w) - 1
-    if last < 0:
-        return positions
-
-    if w[last] == "d" and w in EXCEPTIONS_D:
-        pass
-    elif w[last] == "d":
-        positions.add(last)
-
-    if w[last] == "b" and w not in EXCEPTIONS_B:
-        positions.add(last)
-
-    if w.endswith(("ie", "ée")):
-        positions.add(last)
-    elif w.endswith("ue"):
-        if not (w.endswith("gue") or w.endswith("que")):
-            positions.add(last)
-
-    if w[last] == "g" and w not in EXCEPTIONS_G:
-        positions.add(last)
-    if w[last] == "p" and w not in EXCEPTIONS_P:
-        positions.add(last)
-    if w[last] == "t" and w not in EXCEPTIONS_T:
-        positions.add(last)
-    if w[last] == "x" and w not in EXCEPTIONS_X:
-        positions.add(last)
-    if w[last] == "s" and w not in EXCEPTIONS_S:
-        positions.add(last)
-        if len(w) > 1:
-            prev = w[:-1]
-            prev_pos = get_mute_positions(prev, sentence)
-            for p in prev_pos:
-                positions.add(p)
+    # si on est ici, mot ne finit pas par 's' (ou c'est un 's' isolé traité plus haut)
+    _apply_final_letter_rules(wn, positions, len(original))
 
     return positions
 
-# --- fin portage ---
+# --- fin implémentation complète des règles ---
 
 
 def escape_html(s: str) -> str:
