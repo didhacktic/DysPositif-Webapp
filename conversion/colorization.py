@@ -49,6 +49,12 @@ def colorize_syllables_and_mute_html(text: str) -> str:
     i = 0
 
     import re
+    doc = None
+    if getattr(_mute, 'SPACY_OK', False):
+        try:
+            doc = _mute._nlp(text)
+        except Exception:
+            doc = None
     while i < len(text):
         m = SYLL_WORD_PATTERN.match(text, i)
         if not m:
@@ -63,8 +69,20 @@ def colorize_syllables_and_mute_html(text: str) -> str:
             i = m.end()
             continue
 
+        # Try to locate the spaCy token for this specific occurrence so that
+        # `get_mute_positions` can use per-occurrence context (negation, nearby
+        # tokens, etc.). If no token/doc available, fall back to the sentence
+        # parsing behavior inside `get_mute_positions`.
+        token_for_match = None
+        if doc is not None:
+            start_char = m.start()
+            end_char = m.end()
+            for t in doc:
+                if t.idx >= start_char and t.idx < end_char and t.text.lower() == word.lower():
+                    token_for_match = t
+                    break
         try:
-            mute_pos = get_mute_positions(word, text)
+            mute_pos = get_mute_positions(word, text, token_for_match)
         except Exception:
             mute_pos = set()
 
