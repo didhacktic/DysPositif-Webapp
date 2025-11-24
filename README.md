@@ -12,9 +12,8 @@ DysPositifWebapp/
   static/
     style.css              # Styles modernes
   conversion/
-    pdf_to_reflow_html.py  # Conversion PDF -> HTML reflow
+    pipeline.py            # Pipeline principal de conversion (CLI + API)
     html_builder.py        # Génération HTML/CSS adapté
-    pipeline.py            # Pipeline principal de conversion
     core/
       syllables.py         # Segmentation syllabique
   uploads/                 # (créé au runtime, fichiers uploadés)
