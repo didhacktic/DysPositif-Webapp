@@ -19,14 +19,18 @@ except Exception:
 
 # Exceptions et cas particuliers
 EXC_B = {"rib", "blob", "club", "pub", "kebab", "nabab", "snob", "toubib", "baobab", "jazzclub", "motoclub", "night-club"}
-EXC_G = {"grog", "ring", "bang", "gong", "yang", "ying", "slang", "gang", "erg", "iceberg", "zig", "zigzag", "krieg", "bowling", "briefing", "shopping", "building", "camping", "parking", "living", "marketing", "dancing", "jogging", "surfing", "training", "meeting", "feeling", "holding", "standing", "trading"}
+EXC_D = {"david", "covid", "pied", "d", "aujourd", "sud"}
+EXC_G = {"kg", "cg", "mg", "dg", "dag", "grog", "ring", "bang", "gong", "yang", "ying", "slang", "gang", "erg", "iceberg", "zig", "zigzag", "krieg", "bowling", "briefing", "shopping", "building", "camping", "parking", "living", "marketing", "dancing", "jogging", "surfing", "training", "meeting", "feeling", "holding", "standing", "trading"}
 EXC_P = {"stop", "workshop", "handicap", "wrap", "ketchup", "top", "flip-flop", "hip-hop", "clip", "slip", "trip", "grip", "strip", "shop", "drop", "hop", "pop", "flop", "chop", "prop", "crop", "laptop", "desktop"}
-EXC_T = {"et", "est", "but", "chut", "fiat", "brut", "concept", "foot", "huit", "mat", "net", "ouest", "rut", "out", "ut", "flirt", "kurt", "loft", "raft", "rift", "soft", "watt", "west", "abstract", "affect", "apart", "audit", "belt", "best", "blast", "boost", "compact", "connect", "contact", "correct", "cost", "craft", "cut", "direct", "district", "draft", "drift", "exact", "exit", "impact", "infect", "input", "must", "next", "night", "outfit", "output", "paint", "perfect", "plot", "post", "print", "prompt", "prospect", "react", "root", "set", "shirt", "short", "shot", "smart", "spirit", "split", "spot", "sprint", "start", "strict", "tact", "test", "tilt", "tract", "trust", "twist", "volt"}
+EXC_T = {"t", "sept", "et", "est", "but", "chut", "fiat", "brut", "concept", "foot", "huit", "mat", "net", "ouest", "rut", "out", "ut", "flirt", "kurt", "loft", "raft", "rift", "soft", "watt", "west", "abstract", "affect", "apart", "audit", "belt", "best", "blast", "boost", "compact", "connect", "contact", "correct", "cost", "craft", "cut", "direct", "district", "draft", "drift", "exact", "exit", "impact", "infect", "input", "must", "next", "night", "outfit", "output", "paint", "perfect", "plot", "post", "print", "prompt", "prospect", "react", "root", "set", "shirt", "short", "shot", "smart", "spirit", "split", "spot", "sprint", "start", "strict", "tact", "test", "tilt", "tract", "trust", "twist", "volt"}
 EXC_X = {"six", "dix", "index", "duplex", "latex", "lynx", "matrix", "mix", "multiplex", "reflex", "relax", "remix", "silex", "thorax", "vortex", "xerox"}
-EXC_S = {"bus", "ours", "ars", "cursus", "lapsus", "virus", "cactus", "consensus", "us", "as", "mas", "bis", "lys", "métis", "os", "bonus", "campus", "focus", "boss", "stress", "express", "dress", "fitness"}
+EXC_S = {"bus", "ours", "ars", "cursus", "lapsus", "virus", "cactus", "consensus", "us", "as", "mas", "bis", "lys", "métis", "os", "bonus", "campus", "focus", "boss", "stress", "express", "dress", "fitness", "s", "houmous", "humus", "humérus", "cubitus", "habitus", "hiatus", "des", "mes", "tes", "ces", "les", "ses"}
 # 'plus' doit être géré par la logique contextuelle (spaCy/fallback),
 # ne pas le griser systématiquement via la règle générique "endswith('s')".
 EXC_S.add("plus")
+
+# Exceptions pour lettres initiales (ne pas griser le 'h' de certains mots)
+EXC_H = {"hui"}
 
 CAS_PARTICULIERS = {
     "croc": "c", "crocs": "cs",
@@ -53,7 +57,7 @@ def _apply_final_letter_rules(base_word: str, positions: set, original_len: int)
     last = len(base_word) - 1
     last_char = base_word[last]
 
-    if last_char == 'd':
+    if last_char == 'd' and base_word not in EXC_D:
         positions.add(original_len - 1)
         return
     if last_char == 'b' and base_word not in EXC_B:
@@ -71,6 +75,12 @@ def _apply_final_letter_rules(base_word: str, positions: set, original_len: int)
         positions.add(original_len - 1)
         return
     if last_char == 't' and base_word not in EXC_T:
+        # Exception: words ending with 'et' should never have the final 't' grayed
+        try:
+            if base_word.endswith('et'):
+                return
+        except Exception:
+            pass
         positions.add(original_len - 1)
         return
     if last_char == 'x' and base_word not in EXC_X:
@@ -159,7 +169,123 @@ def _is_plus_to_gray(doc, token):
 
 
 def _is_tous_pronoun(doc, token):
-    return token.pos_ == 'PRON'
+    # Heuristic: spaCy POS is a strong signal, but refine with dependency and context
+    try:
+        if token.pos_ == 'PRON':
+            return True
+        # If token is tagged ADJ but functions as determiner for an ADJ head ("Ils sont tous heureux"),
+        # treat as pronoun/quantifier (non-grisé)
+        if token.dep_ == 'det' and token.head.pos_ == 'ADJ':
+            return True
+        # If 'tous' is at sentence start and followed by a verb -> pronoun ("Tous sont invités")
+        if token.i == token.sent.start:
+            try:
+                nxt = token.nbor(1) if token.i + 1 < token.sent.end else None
+                if nxt is not None and nxt.pos_ in {'AUX', 'VERB'}:
+                    return True
+            except Exception:
+                pass
+        # If previous token is preposition 'à' -> pronoun (object of preposition) e.g. "Bienvenue à tous"
+        try:
+            prev = token.nbor(-1) if token.i > token.sent.start else None
+            if prev is not None and prev.text.lower() == 'à':
+                return True
+        except Exception:
+            pass
+    except Exception:
+        pass
+    return False
+
+
+def _is_tous_pronoun_refined(doc, token):
+    """Refined heuristic for the webapp: returns True when 'tous' should be treated
+    as a pronoun/quantifier (i.e. NOT grayed). Uses token-aware syntactic cues.
+    """
+    if doc is None or token is None:
+        return False
+
+    # 1) Trust spaCy PRON
+    if getattr(token, 'pos_', '') == 'PRON':
+        return True
+
+    # helpers
+    def prev_non_punct():
+        j = token.i - 1
+        while j >= token.sent.start:
+            if not doc[j].is_punct:
+                return doc[j]
+            j -= 1
+        return None
+
+    def next_non_punct():
+        j = token.i + 1
+        while j < token.sent.end:
+            if not doc[j].is_punct:
+                return doc[j]
+            j += 1
+        return None
+
+    prev = prev_non_punct()
+    nxt = next_non_punct()
+
+    # 2) Preposition before -> pronoun as object of preposition (Bienvenue à tous)
+    if prev is not None and prev.pos_ == 'ADP':
+        return True
+
+    # 3) Sentence-initial + following verb -> likely pronoun (Tous sont arrivés)
+    if token.i == token.sent.start and nxt is not None and nxt.pos_ in {'AUX', 'VERB'}:
+        return True
+
+    # 4) If head is a verb or auxiliary -> 'tous' quantifies a verbal argument
+    if token.head is not None and token.head.pos_ in {'VERB', 'AUX'}:
+        return True
+
+    # 5) If head is ADJ (predicate adjective after copula) -> 'tous' quantifies subject
+    if token.head is not None and token.head.pos_ == 'ADJ':
+        return True
+
+    # 6) If 'tous' modifies a following noun phrase (DET/NOUN), usually adjectival -> grisé,
+    #    except when part of a copular predication attached to the same head or when
+    #    a pronominal subject appears before 'tous'. In those exceptional cases, treat as pronoun.
+    try:
+        if token.head is not None and token.head.pos_ in {'NOUN', 'PROPN'} and token.dep_ in {'amod', 'det'}:
+            # check for copula attached to the same head (e.g. "Ils sont tous les descendants...")
+            copula_present = False
+            for t in token.sent:
+                if getattr(t, 'dep_', '') == 'cop' and getattr(t, 'lemma_', '').lower() == 'être' and t.head == token.head:
+                    copula_present = True
+                    break
+            if copula_present:
+                return True
+
+            # Special-case temporal nouns: treat as adjectival (ex: "tous les jours")
+            try:
+                head_lemma = getattr(token.head, 'lemma_', '').lower()
+                temporal_nouns = {"jour", "jours", "semaine", "semaines", "mois", "an", "ans", "année", "années", "matin", "soir", "soirée", "après-midi"}
+                if head_lemma in temporal_nouns:
+                    return False
+            except Exception:
+                pass
+
+            # if there is an explicit pronominal subject before 'tous', treat as pronoun
+            for t in token.sent:
+                if t.i < token.i and getattr(t, 'dep_', '') in {'nsubj', 'csubj'} and t.pos_ == 'PRON':
+                    return True
+
+            # otherwise adjectival
+            return False
+    except Exception:
+        pass
+
+    # 7) Reporting/utterance contexts: after reporting verbs or colon
+    reporting_verbs = {"dire", "annoncer", "crier", "déclarer", "appeler", "ordonner", "inviter", "proclamer"}
+    if prev is not None:
+        if prev.text == ':' or (getattr(prev, 'lemma_', '').lower() in reporting_verbs):
+            if nxt is not None and nxt.pos_ in {'ADV', 'PART'}:
+                return True
+
+    # Default: treat as adjectival/ambiguous (not pronoun)
+    return False
 
 
 def get_mute_positions(word: str, sentence: str | None = None, token=None) -> Set[int]:
@@ -175,7 +301,14 @@ def get_mute_positions(word: str, sentence: str | None = None, token=None) -> Se
                 positions.add(len(original) - len(suffix) + k)
         return positions
     if wn and wn[0] == 'h':
-        positions.add(0)
+        # do not gray initial 'h' for known exceptions (e.g. 'hui' in "aujourd'hui")
+        try:
+            if wn in EXC_H:
+                pass
+            else:
+                positions.add(0)
+        except Exception:
+            positions.add(0)
     doc = None
     # `token` can be provided by callers (per-occurrence token from spaCy).
     if SPACY_OK:
@@ -209,8 +342,20 @@ def get_mute_positions(word: str, sentence: str | None = None, token=None) -> Se
                     positions.add(len(original) - 3 + k)
                 return positions
     if wn == 'tous' and doc is not None and token is not None:
-        if not _is_tous_pronoun(doc, token):
-            positions.add(len(original) - 1)
+        # Use the refined token-aware heuristic. Gray when 'tous' is adjectival
+        # (i.e. NOT pronominal). This mirrors the behavior used in the main
+        # DysPositif core heuristics but remains local to the webapp.
+        try:
+            is_pron = _is_tous_pronoun_refined(doc, token)
+            if not is_pron:
+                positions.add(len(original) - 1)
+        except Exception:
+            # fallback: if the simple heuristic detects pronoun, avoid graying
+            try:
+                if not _is_tous_pronoun(doc, token):
+                    positions.add(len(original) - 1)
+            except Exception:
+                pass
         return positions
     if wn == 'plus':
         if doc is not None and token is not None:
